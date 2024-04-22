@@ -72,6 +72,7 @@ class Options:
     download: bool = True
     no_link: bool = False
     out_link: str = "result"
+    quiet_build: bool = False
 
     @property
     def remote_url(self) -> None | str:
@@ -125,7 +126,7 @@ async def parse_args(args: list[str]) -> Options:
         "-f",
         "--flake",
         default=".#checks",
-        help="Flake url to evaluate/build (default: .#checks",
+        help="Flake url to evaluate/build (default: .#checks)",
     )
     parser.add_argument(
         "-j",
@@ -210,6 +211,13 @@ async def parse_args(args: list[str]) -> Options:
         help="debug logging output",
     )
     parser.add_argument(
+        "-q",
+        "--quiet-build",
+        default=False,
+        action="store_true",
+        help="Pass `--no-build-logs` to `nix-build`",
+    )
+    parser.add_argument(
         "--eval-max-memory-size",
         type=int,
         default=4096,
@@ -274,6 +282,7 @@ async def parse_args(args: list[str]) -> Options:
         copy_to=a.copy_to,
         no_link=a.no_link,
         out_link=a.out_link,
+        quiet_build=a.quiet_build,
     )
 
 
@@ -604,6 +613,8 @@ async def nix_build(
             "--out-link",
             opts.out_link + "-" + attr,
         ]
+    if opts.quiet_build:
+        args += ["--no-build-output"]
 
     args = maybe_remote(args, opts)
     logger.debug("run %s", shlex.join(args))
